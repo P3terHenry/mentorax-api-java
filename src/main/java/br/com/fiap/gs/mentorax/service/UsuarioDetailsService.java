@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -22,18 +23,15 @@ public class UsuarioDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws ResponseStatusException {
-
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                                 "Usuário não encontrado com o e-mail: " + email));
 
-        // Cria a lista de authorities com base no cargo ou tipo de usuário
-        List<GrantedAuthority> authorities = List.of(
-                new SimpleGrantedAuthority(
-                        "ROLE_" + usuario.getTipoUsuario().toUpperCase() // Ex: ROLE_MENTOR, ROLE_MENTORADO
-                )
-        );
+        // Define a role com base no tipoUsuario (Enum) e não no cargo (String)
+        String role = "ROLE_" + usuario.getTipoUsuario().name(); // ADMIN, MENTOR, MENTORADO
+
+        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
 
         return new User(
                 usuario.getEmail(),
