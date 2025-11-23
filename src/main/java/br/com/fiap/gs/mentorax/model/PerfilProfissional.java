@@ -17,8 +17,8 @@ public class PerfilProfissional {
     @Column(name = "ID_PERFIL")
     private Long idPerfil;
 
-    @ManyToOne
-    @JoinColumn(name = "ID_USUARIO", nullable = false, referencedColumnName = "ID_USUARIO")
+    @OneToOne
+    @JoinColumn(name = "id_usuario", nullable = false, referencedColumnName = "ID_USUARIO")
     private Usuario usuario;
 
     @Column(name = "AREA_INTERESSE", length = 100)

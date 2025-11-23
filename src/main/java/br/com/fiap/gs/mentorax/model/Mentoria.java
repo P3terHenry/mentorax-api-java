@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,5 +38,5 @@ public class Mentoria {
     private String status;
 
     @Column(name = "NOTA_SATISFACAO", precision = 3, scale = 1)
-    private Double notaSatisfacao;
+    private BigDecimal notaSatisfacao;
 }
