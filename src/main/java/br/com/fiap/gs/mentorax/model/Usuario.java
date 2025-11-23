@@ -35,7 +35,7 @@ public class Usuario {
     @Column(name = "ATIVO", length = 1)
     private String ativo; // 'S' para sim, 'N' para não
 
-    @OneToOne(mappedBy = "USUARIO", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
     private PerfilProfissional perfilProfissional;
 
 }
