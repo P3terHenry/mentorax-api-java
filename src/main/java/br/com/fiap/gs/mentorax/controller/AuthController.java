@@ -4,6 +4,8 @@ import br.com.fiap.gs.mentorax.dto.*;
 import br.com.fiap.gs.mentorax.model.Usuario;
 import br.com.fiap.gs.mentorax.repository.UsuarioRepository;
 import br.com.fiap.gs.mentorax.security.JWTUtil;
+import br.com.fiap.gs.mentorax.service.RecuperacaoService;
+import br.com.fiap.gs.mentorax.service.UsuarioCachingService;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,8 +13,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -38,6 +43,12 @@ public class AuthController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private UsuarioCachingService usuarioCachingService;
+
+    @Autowired
+    private RecuperacaoService recuperacaoService;
+
     @Operation(summary = "Solicitar token de autenticação")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Token gerado com sucesso."),
@@ -52,6 +63,10 @@ public class AuthController {
 
             Usuario usuario = usuarioRepository.findByEmail(login.getEmail())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
+
+            if (!"S".equalsIgnoreCase(usuario.getAtivo())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário inativo. Não foi possível realizar o login. Para reativer, utilize o endpoint de recuperação de conta.");
+            }
 
             String token = jwtUtil.construirToken(usuario);
             Claims claims = jwtUtil.extrairClaims(token);
@@ -123,16 +138,46 @@ public class AuthController {
             usuario.setDataCadastro(LocalDateTime.now());
 
             usuarioRepository.save(usuario);
+            usuarioCachingService.limparCache();
 
             return new JWTRegistrarResponseDTO(
                     "Usuário criado com sucesso.",
                     usuario.getEmail(),
                     usuario.getTipoUsuario()
             );
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cargo inválido. Valores permitidos: ADMIN, MENTOR, MENTORADO.");
         } catch (ResponseStatusException ex) {
             throw ex;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro inesperado ao registrar usuário: " + e.getMessage());
         }
     }
+
+    @Operation(summary = "Solicitar recuperação de senha via e-mail")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "E-mail de recuperação encaminhado."),
+            @ApiResponse(responseCode = "404", description = "E-mail não encontrado."),
+            @ApiResponse(responseCode = "429", description = "Muitas solicitações recentes. Tente novamente mais tarde.")
+    })
+    @PostMapping("/recuperarSenha")
+    public ResponseEntity<RecuperacaoResponseDTO> solicitarRecuperacao(
+            @RequestBody RecuperacaoSenhaRequestDTO request) {
+
+        recuperacaoService.solicitarRecuperacao(request.getEmail());
+        return ResponseEntity.ok(new RecuperacaoResponseDTO("E-mail de recuperação encaminhado."));
+    }
+
+    @Operation(summary = "Validar código de recuperação enviado por e-mail")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Código validado com sucesso."),
+            @ApiResponse(responseCode = "400", description = "Código incorreto ou expirado.", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "403", description = "Muitas tentativas inválidas. Tente novamente mais tarde.", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "404", description = "E-mail não encontrado.", content = @Content(schema = @Schema(hidden = true)))
+    })
+    @PostMapping("/validarCodigo")
+    public ResponseEntity<ValidarCodigoResponseDTO> validarCodigo(@RequestBody ValidarCodigoRequestDTO request) {
+        return ResponseEntity.ok(recuperacaoService.validarCodigo(request.getEmail(), request.getCodigo()));
+    }
+
 }
