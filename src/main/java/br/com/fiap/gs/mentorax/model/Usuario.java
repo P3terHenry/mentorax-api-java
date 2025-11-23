@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "T_MENTORAX_USUARIO")
 @Data
@@ -17,13 +19,13 @@ public class Usuario {
     @Column(name = "ID_USUARIO")
     private Long idUsuario;
 
-    @Column(name = "NM_USUARIO", nullable = false, length = 100)
+    @Column(name = "NOME", nullable = false, length = 100)
     private String nome;
 
     @Column(name = "EMAIL", nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(name = "SENHA", nullable = false)
+    @Column(name = "SENHA_HASH", nullable = false)
     private String senhaHash;
 
     @Column(name = "CARGO", length = 100)
@@ -34,6 +36,9 @@ public class Usuario {
 
     @Column(name = "ATIVO", length = 1)
     private String ativo; // 'S' para sim, 'N' para não
+
+    @Column(name = "DATA_CADASTRO")
+    private LocalDateTime dataCadastro;
 
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
     private PerfilProfissional perfilProfissional;
