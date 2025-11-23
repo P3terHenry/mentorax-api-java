@@ -1,10 +1,8 @@
 -- =========================================================
--- TRIGGERS DE AUDITORIA MENTORAX (SQL SERVER / AZURE)
+-- TRIGGER DE AUDITORIA: T_MENTORAX_USUARIO (Atualizada)
+-- Banco: SQL Server / Azure
 -- =========================================================
 
--- ==========================================
--- TRIGGER: T_MENTORAX_USUARIO
--- ==========================================
 CREATE OR ALTER TRIGGER TR_AUDITORIA_USUARIO
 ON T_MENTORAX_USUARIO
 AFTER INSERT, UPDATE, DELETE
@@ -13,28 +11,91 @@ BEGIN
     SET NOCOUNT ON;
     DECLARE @usuario NVARCHAR(100) = SUSER_SNAME();
 
-    -- INSERT
+    -- ==============================================
+    -- OPERAÇÃO: INSERT
+    -- ==============================================
     IF EXISTS (SELECT 1 FROM INSERTED) AND NOT EXISTS (SELECT 1 FROM DELETED)
-    INSERT INTO T_MENTORAX_AUDITORIA (NOME_TABELA, OPERACAO, USUARIO_OPERACAO, VALOR_NOVO)
-SELECT 'T_MENTORAX_USUARIO','INSERT',@usuario,
-       CONCAT('ID_USUARIO=',I.ID_USUARIO,', NOME=',I.NOME,', EMAIL=',I.EMAIL,', SENHA_HASH=',I.SENHA_HASH,
-              ', CARGO=',I.CARGO,', TIPO_USUARIO=',I.TIPO_USUARIO,', DATA_CADASTRO=',FORMAT(I.DATA_CADASTRO,'dd/MM/yyyy HH:mm:ss'),
-              ', ATIVO=',I.ATIVO)
+        INSERT INTO T_MENTORAX_AUDITORIA (NOME_TABELA, OPERACAO, USUARIO_OPERACAO, VALOR_NOVO)
+SELECT
+    'T_MENTORAX_USUARIO',
+    'INSERT',
+    @usuario,
+    CONCAT(
+            'ID_USUARIO=', I.ID_USUARIO,
+            ', NOME=', I.NOME,
+            ', EMAIL=', I.EMAIL,
+            ', SENHA_HASH=', I.SENHA_HASH,
+            ', CARGO=', I.CARGO,
+            ', TIPO_USUARIO=', I.TIPO_USUARIO,
+            ', DATA_CADASTRO=', FORMAT(I.DATA_CADASTRO, 'dd/MM/yyyy HH:mm:ss'),
+            ', ATIVO=', I.ATIVO,
+            ', CODIGO_RECUPERACAO=', ISNULL(I.CODIGO_RECUPERACAO, 'NULL'),
+            ', CODIGO_RECUPERACAO_EXPIRA_EM=', FORMAT(I.CODIGO_RECUPERACAO_EXPIRA_EM, 'dd/MM/yyyy HH:mm:ss'),
+            ', CODIGO_RECUPERACAO_TENTATIVAS=', I.CODIGO_RECUPERACAO_TENTATIVAS,
+            ', ULTIMA_RECUPERACAO_EM=', FORMAT(I.ULTIMA_RECUPERACAO_EM, 'dd/MM/yyyy HH:mm:ss')
+    )
 FROM INSERTED I;
 
--- UPDATE
+-- ==============================================
+-- OPERAÇÃO: UPDATE
+-- ==============================================
 IF EXISTS (SELECT 1 FROM INSERTED) AND EXISTS (SELECT 1 FROM DELETED)
-    INSERT INTO T_MENTORAX_AUDITORIA (NOME_TABELA,OPERACAO,USUARIO_OPERACAO,VALOR_ANTIGO,VALOR_NOVO)
-SELECT 'T_MENTORAX_USUARIO','UPDATE',@usuario,
-       CONCAT('ID_USUARIO=',D.ID_USUARIO,', NOME=',D.NOME,', EMAIL=',D.EMAIL,', CARGO=',D.CARGO),
-       CONCAT('ID_USUARIO=',I.ID_USUARIO,', NOME=',I.NOME,', EMAIL=',I.EMAIL,', CARGO=',I.CARGO)
-FROM INSERTED I INNER JOIN DELETED D ON I.ID_USUARIO=D.ID_USUARIO;
+        INSERT INTO T_MENTORAX_AUDITORIA (NOME_TABELA, OPERACAO, USUARIO_OPERACAO, VALOR_ANTIGO, VALOR_NOVO)
+SELECT
+    'T_MENTORAX_USUARIO',
+    'UPDATE',
+    @usuario,
+    CONCAT(
+            'ID_USUARIO=', D.ID_USUARIO,
+            ', NOME=', D.NOME,
+            ', EMAIL=', D.EMAIL,
+            ', SENHA_HASH=', D.SENHA_HASH,
+            ', CARGO=', D.CARGO,
+            ', TIPO_USUARIO=', D.TIPO_USUARIO,
+            ', ATIVO=', D.ATIVO,
+            ', CODIGO_RECUPERACAO=', ISNULL(D.CODIGO_RECUPERACAO, 'NULL'),
+            ', EXPIRA_EM=', FORMAT(D.CODIGO_RECUPERACAO_EXPIRA_EM, 'dd/MM/yyyy HH:mm:ss'),
+            ', TENTATIVAS=', D.CODIGO_RECUPERACAO_TENTATIVAS,
+            ', ULTIMA_RECUPERACAO_EM=', FORMAT(D.ULTIMA_RECUPERACAO_EM, 'dd/MM/yyyy HH:mm:ss')
+    ),
+    CONCAT(
+            'ID_USUARIO=', I.ID_USUARIO,
+            ', NOME=', I.NOME,
+            ', EMAIL=', I.EMAIL,
+            ', SENHA_HASH=', I.SENHA_HASH,
+            ', CARGO=', I.CARGO,
+            ', TIPO_USUARIO=', I.TIPO_USUARIO,
+            ', ATIVO=', I.ATIVO,
+            ', CODIGO_RECUPERACAO=', ISNULL(I.CODIGO_RECUPERACAO, 'NULL'),
+            ', EXPIRA_EM=', FORMAT(I.CODIGO_RECUPERACAO_EXPIRA_EM, 'dd/MM/yyyy HH:mm:ss'),
+            ', TENTATIVAS=', I.CODIGO_RECUPERACAO_TENTATIVAS,
+            ', ULTIMA_RECUPERACAO_EM=', FORMAT(I.ULTIMA_RECUPERACAO_EM, 'dd/MM/yyyy HH:mm:ss')
+    )
+FROM INSERTED I
+         INNER JOIN DELETED D ON I.ID_USUARIO = D.ID_USUARIO;
 
--- DELETE
+-- ==============================================
+-- OPERAÇÃO: DELETE
+-- ==============================================
 IF NOT EXISTS (SELECT 1 FROM INSERTED) AND EXISTS (SELECT 1 FROM DELETED)
-    INSERT INTO T_MENTORAX_AUDITORIA (NOME_TABELA,OPERACAO,USUARIO_OPERACAO,VALOR_ANTIGO)
-SELECT 'T_MENTORAX_USUARIO','DELETE',@usuario,
-       CONCAT('ID_USUARIO=',D.ID_USUARIO,', NOME=',D.NOME,', EMAIL=',D.EMAIL,', CARGO=',D.CARGO)
+        INSERT INTO T_MENTORAX_AUDITORIA (NOME_TABELA, OPERACAO, USUARIO_OPERACAO, VALOR_ANTIGO)
+SELECT
+    'T_MENTORAX_USUARIO',
+    'DELETE',
+    @usuario,
+    CONCAT(
+            'ID_USUARIO=', D.ID_USUARIO,
+            ', NOME=', D.NOME,
+            ', EMAIL=', D.EMAIL,
+            ', SENHA_HASH=', D.SENHA_HASH,
+            ', CARGO=', D.CARGO,
+            ', TIPO_USUARIO=', D.TIPO_USUARIO,
+            ', ATIVO=', D.ATIVO,
+            ', CODIGO_RECUPERACAO=', ISNULL(D.CODIGO_RECUPERACAO, 'NULL'),
+            ', EXPIRA_EM=', FORMAT(D.CODIGO_RECUPERACAO_EXPIRA_EM, 'dd/MM/yyyy HH:mm:ss'),
+            ', TENTATIVAS=', D.CODIGO_RECUPERACAO_TENTATIVAS,
+            ', ULTIMA_RECUPERACAO_EM=', FORMAT(D.ULTIMA_RECUPERACAO_EM, 'dd/MM/yyyy HH:mm:ss')
+    )
 FROM DELETED D;
 END;
 GO
