@@ -31,8 +31,9 @@ public class Usuario {
     @Column(name = "CARGO", length = 100)
     private String cargo;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TIPO_USUARIO", nullable = false, length = 20)
-    private String tipoUsuario; // Exemplo: "MENTOR" ou "MENTORADO"
+    private EnumTipoUsuario tipoUsuario; // Exemplo: "MENTOR" ou "MENTORADO"
 
     @Column(name = "ATIVO", length = 1)
     private String ativo; // 'S' para sim, 'N' para não
@@ -42,5 +43,17 @@ public class Usuario {
 
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
     private PerfilProfissional perfilProfissional;
+
+    @Column(name = "CODIGO_RECUPERACAO", length = 10)
+    private String codigoRecuperacao;
+
+    @Column(name = "CODIGO_RECUPERACAO_EXPIRA_EM")
+    private LocalDateTime codigoRecuperacaoExpiraEm;
+
+    @Column(name = "CODIGO_RECUPERACAO_TENTATIVAS")
+    private Integer codigoRecuperacaoTentativas = 0;
+
+    @Column(name = "ULTIMA_RECUPERACAO_EM")
+    private LocalDateTime ultimaRecuperacaoEm;
 
 }
