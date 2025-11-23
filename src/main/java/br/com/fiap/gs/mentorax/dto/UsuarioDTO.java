@@ -2,6 +2,7 @@ package br.com.fiap.gs.mentorax.dto;
 
 import br.com.fiap.gs.mentorax.model.EnumTipoUsuario;
 import br.com.fiap.gs.mentorax.model.Usuario;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,12 +12,25 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class UsuarioDTO {
 
+    @Schema(description = "ID do usuário", example = "1")
     private Long idUsuario;
+
+    @Schema(description = "Nome completo do usuário", example = "João Silva")
     private String nome;
+
+    @Schema(description = "E-mail do usuário", example = "joao.silva@exemplo.com")
     private String email;
+
+    @Schema(description = "Tipo de usuário no sistema", example = "MENTORADO")
     private EnumTipoUsuario tipoUsuario;
+
+    @Schema(description = "Cargo do usuário", example = "Desenvolvedor")
     private String cargo;
+
+    @Schema(description = "Data de cadastro do usuário")
     private LocalDateTime dataCadastro;
+
+    @Schema(description = "Status de ativação do usuário", example = "S")
     private String ativo;
 
     // Construtor que aceita a entidade

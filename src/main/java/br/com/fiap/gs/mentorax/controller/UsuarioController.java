@@ -4,7 +4,6 @@ import br.com.fiap.gs.mentorax.dto.RecuperacaoResponseDTO;
 import br.com.fiap.gs.mentorax.dto.RecuperarSenhaRequestDTO;
 import br.com.fiap.gs.mentorax.dto.UsuarioDTO;
 import br.com.fiap.gs.mentorax.dto.UsuarioRequestDTO;
-import br.com.fiap.gs.mentorax.model.EnumTipoUsuario;
 import br.com.fiap.gs.mentorax.model.Usuario;
 import br.com.fiap.gs.mentorax.repository.UsuarioRepository;
 import br.com.fiap.gs.mentorax.service.UsuarioCachingService;
@@ -25,8 +24,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.swing.text.html.Option;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

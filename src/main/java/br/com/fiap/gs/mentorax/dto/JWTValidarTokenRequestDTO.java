@@ -6,5 +6,6 @@ import lombok.Getter;
 @Getter
 public class JWTValidarTokenRequestDTO {
 
+    @Schema(description = "Token JWT a ser validado", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", requiredMode = Schema.RequiredMode.REQUIRED)
     private String token;
 }
