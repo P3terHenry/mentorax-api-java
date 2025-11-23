@@ -1,7 +1,10 @@
 package br.com.fiap.gs.mentorax.controller;
 
+import br.com.fiap.gs.mentorax.dto.AtualizarPerfilProfissionalRequestDTO;
+import br.com.fiap.gs.mentorax.dto.AtualizarPerfilProfissionalResponseDTO;
 import br.com.fiap.gs.mentorax.dto.CriarPerfilProfissionalRequestDTO;
 import br.com.fiap.gs.mentorax.dto.CriarPerfilProfissionalResponseDTO;
+import br.com.fiap.gs.mentorax.dto.DeletarPerfilProfissionalResponseDTO;
 import br.com.fiap.gs.mentorax.dto.PerfilProfissionalDTO;
 import br.com.fiap.gs.mentorax.model.PerfilProfissional;
 import br.com.fiap.gs.mentorax.model.Usuario;
@@ -20,8 +23,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -79,7 +84,7 @@ public class PerfilProfissionalController {
 
     }
 
-    @Operation(summary = "Retorna o perfil profissional do usuário presente no token do header Authorization.")
+    @Operation(summary = "Retorna o perfil profissional do usuário autenticado.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Perfil Profissional retornado com sucesso"),
             @ApiResponse(responseCode = "401", description = "Token inválido ou expirado", content = @Content(schema = @Schema(hidden = true))),
@@ -191,6 +196,123 @@ public class PerfilProfissionalController {
                 perfilSalvo.getIdPerfil(),
                 perfilSalvo.getUsuario().getIdUsuario(),
                 "Perfil profissional criado com sucesso."
+        );
+    }
+
+    @Operation(summary = "Atualiza o perfil profissional do usuário autenticado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil profissional atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "401", description = "Token inválido ou expirado", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "404", description = "Perfil profissional não encontrado", content = @Content(schema = @Schema(hidden = true)))
+    })
+    @PutMapping(value = "/atualizar/meuPerfil")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public AtualizarPerfilProfissionalResponseDTO atualizarPerfilProfissional(
+            @Parameter(hidden = true) @RequestHeader(name = "Authorization", required = false) String authorizationHeader,
+            @Valid @RequestBody AtualizarPerfilProfissionalRequestDTO request) {
+
+        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cabeçalho Authorization não informado.");
+        }
+
+        if (!authorizationHeader.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cabeçalho Authorization deve ter o formato: Bearer <token>");
+        }
+
+        String token = authorizationHeader.substring(7).trim();
+
+        boolean valido = jwtUtil.validarToken(token);
+        if (!valido) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido ou expirado.");
+        }
+
+        Long idUsuario;
+        try {
+            idUsuario = jwtUtil.extrairUsuariobyId(token);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Não foi possível extrair o id do token: " + e.getMessage());
+        }
+
+        // Buscar o perfil profissional existente
+        PerfilProfissional perfilExistente = perfilRepository.findByUsuarioIdUsuario(idUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Perfil profissional não encontrado para o usuário do token."));
+
+        // Atualizar os campos do perfil
+        perfilExistente.setAreaInteresse(request.getAreaInteresse());
+        perfilExistente.setObjetivosProfissionais(request.getObjetivosProfissionais());
+        perfilExistente.setExperienciaResumida(request.getExperienciaResumida());
+        perfilExistente.setSoftSkills(request.getSoftSkills());
+        perfilExistente.setHardSkills(request.getHardSkills());
+        perfilExistente.setDisponibilidadeHoras(request.getDisponibilidadeHoras());
+
+        PerfilProfissional perfilAtualizado = perfilRepository.save(perfilExistente);
+
+        // Limpar cache
+        perfilProfissionalCachingService.limparCache();
+
+        return new AtualizarPerfilProfissionalResponseDTO(
+                perfilAtualizado.getIdPerfil(),
+                perfilAtualizado.getUsuario().getIdUsuario(),
+                "Perfil profissional atualizado com sucesso."
+        );
+    }
+
+    @Operation(summary = "Deleta o perfil profissional do usuário autenticado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil profissional deletado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Token inválido ou expirado", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "404", description = "Perfil profissional não encontrado", content = @Content(schema = @Schema(hidden = true)))
+    })
+    @DeleteMapping(value = "/deletar/meuPerfil")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public DeletarPerfilProfissionalResponseDTO deletarPerfilProfissional(
+            @Parameter(hidden = true) @RequestHeader(name = "Authorization", required = false) String authorizationHeader) {
+
+        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cabeçalho Authorization não informado.");
+        }
+
+        if (!authorizationHeader.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cabeçalho Authorization deve ter o formato: Bearer <token>");
+        }
+
+        String token = authorizationHeader.substring(7).trim();
+
+        boolean valido = jwtUtil.validarToken(token);
+        if (!valido) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido ou expirado.");
+        }
+
+        Long idUsuario;
+        try {
+            idUsuario = jwtUtil.extrairUsuariobyId(token);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Não foi possível extrair o id do token: " + e.getMessage());
+        }
+
+        // Buscar o perfil profissional existente
+        PerfilProfissional perfilExistente = perfilRepository.findByUsuarioIdUsuario(idUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Perfil profissional não encontrado para o usuário do token."));
+
+        Long idPerfil = perfilExistente.getIdPerfil();
+        Long idUsuarioAssociado = perfilExistente.getUsuario().getIdUsuario();
+
+        // Remover a referência bidirecional antes de deletar
+        Usuario usuario = perfilExistente.getUsuario();
+        usuario.setPerfilProfissional(null);
+        usuarioRepository.save(usuario);
+
+        // Deletar o perfil profissional
+        perfilRepository.delete(perfilExistente);
+
+        // Limpar cache
+        perfilProfissionalCachingService.limparCache();
+
+        return new DeletarPerfilProfissionalResponseDTO(
+                idPerfil,
+                idUsuarioAssociado,
+                "Perfil profissional deletado com sucesso."
         );
     }
 
