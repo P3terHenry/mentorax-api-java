@@ -24,6 +24,11 @@ public class MentoraXApplication {
         setIfAbsent("SPRING_DATASOURCE_USERNAME", dotenv.get("SPRING_DATASOURCE_USERNAME"));
         setIfAbsent("SPRING_DATASOURCE_PASSWORD", dotenv.get("SPRING_DATASOURCE_PASSWORD"));
         setIfAbsent("SPRING_DATASOURCE_DRIVER", dotenv.get("SPRING_DATASOURCE_DRIVER"));
+        setIfAbsent("SPRING_MAIL_HOST", dotenv.get("SPRING_MAIL_HOST"));
+        setIfAbsent("SPRING_MAIL_PORT", dotenv.get("SPRING_MAIL_PORT"));
+        setIfAbsent("SPRING_MAIL_USERNAME", dotenv.get("SPRING_MAIL_USERNAME"));
+        setIfAbsent("SPRING_MAIL_PASSWORD", dotenv.get("SPRING_MAIL_PASSWORD"));
+        setIfAbsent("APP_MAIL_FROM", dotenv.get("APP_MAIL_FROM"));
         setIfAbsent("OPEN_AI_KEY", dotenv.get("OPEN_AI_KEY"));
 
         SpringApplication.run(MentoraXApplication.class, args);
