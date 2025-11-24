@@ -9,5 +9,13 @@ import java.util.List;
 @Repository
 public interface HistoricoIARepository extends JpaRepository<HistoricoIA, Long> {
 
+    // Buscar histórico por usuário
     List<HistoricoIA> findByUsuarioIdUsuario(Long idUsuario);
+
+    // Buscar histórico por usuário e tipo
+    List<HistoricoIA> findByUsuarioIdUsuarioAndTipoGeracao(Long idUsuario, String tipoGeracao);
+
+    // Buscar histórico por usuário ordenado por data
+    List<HistoricoIA> findByUsuarioIdUsuarioOrderByDataExecucaoDesc(Long idUsuario);
 }
+
