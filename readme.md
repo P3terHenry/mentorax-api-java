@@ -255,4 +255,4 @@ Este projeto está sob a licença MIT.
 
 ---
 
-**Desenvolvido com ❤️ por:** Marcus Calazans, Felipe Ramon e Pedro Antonieti | FIAP - 2TDSPH | Global Solution 2024
+**Desenvolvido com ❤️ por:** Marcus Calazans, Felipe Ramon e Pedro Antonieti | FIAP - 2TDSPH | Global Solution 2025
